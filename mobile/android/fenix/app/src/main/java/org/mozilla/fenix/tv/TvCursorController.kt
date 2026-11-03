@@ -52,6 +52,15 @@ class TvCursorController(
 
     private var cachedGecko: View? = null
 
+    /**
+     * A single remote press must produce a single tap. If the framework re-delivers the
+     * key (or a second event slips in while a dialog is appearing), the duplicate tap
+     * lands on whatever opened - which is what makes the browser menu open and
+     * immediately close. Ignore taps that arrive too close together.
+     */
+    private var lastTapAt = 0L
+    private val tapDebounceMs = 400L
+
     private var x = initialX
     private var y = initialY
     private var visible = false
@@ -138,10 +147,10 @@ class TvCursorController(
         // their own D-pad focus traversal and scrolling. Taking the keys there makes
         // those lists unscrollable, so yield unless focus is on Compose UI or Gecko.
         val focused = root.findFocus()
-        if (focused != null && focused !== gecko) {
-            val name = focused.javaClass.name
-            val pointerOwned = name.contains("AndroidComposeView") || name.contains("GeckoView")
-            if (!pointerOwned) return false
+        if (focused != null && focused !== gecko && isNativeScrollableList(focused)) {
+            // Settings and other classic preference lists handle D-pad traversal and
+            // scrolling themselves; the pointer would make them unusable.
+            return false
         }
 
         when (event.keyCode) {
@@ -178,6 +187,11 @@ class TvCursorController(
         }
         return false
     }
+
+    private fun isNativeScrollableList(view: View): Boolean =
+        view is android.widget.AbsListView ||
+            view is androidx.recyclerview.widget.RecyclerView ||
+            view is android.widget.ScrollView
 
     private fun show(gecko: View?) {
         visible = true
@@ -272,6 +286,12 @@ class TvCursorController(
     }
 
     private fun tap(gecko: View?) {
+        val now = SystemClock.uptimeMillis()
+        if (now - lastTapAt < tapDebounceMs) {
+            android.util.Log.d("TvCursor", "tap debounced (${now - lastTapAt}ms)")
+            return
+        }
+        lastTapAt = now
         // Dispatch through the root so the tap reaches whatever is under the cursor:
         // page content, Fenix's toolbar or a menu. Routing straight to GeckoView would
         // make the app's own chrome unreachable, which is the main reason a TV browser
@@ -279,21 +299,27 @@ class TvCursorController(
         val screenX = x
         val screenY = y
         root.post {
-            // MotionEvent coordinates are local to the view that receives them. The
-            // pointer is tracked in screen space, so translate before dispatching or
-            // taps land on the wrong control whenever the root is inset.
+            // Dispatch through the window's decor view: it spans the whole window,
+            // including the area under system insets where the toolbar's overflow
+            // button sits. Dispatching to the content root missed that edge.
+            val target = root.rootView
             val loc = IntArray(2)
-            root.getLocationOnScreen(loc)
+            target.getLocationOnScreen(loc)
             val cx = screenX - loc[0]
             val cy = screenY - loc[1]
 
             val downTime = SystemClock.uptimeMillis()
             val down = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, cx, cy, 0)
-            root.dispatchTouchEvent(down)
+            down.source = android.view.InputDevice.SOURCE_TOUCHSCREEN
+            target.dispatchTouchEvent(down)
             down.recycle()
 
-            val up = MotionEvent.obtain(downTime, downTime + 60, MotionEvent.ACTION_UP, cx, cy, 0)
-            root.dispatchTouchEvent(up)
+            // Release one millisecond later: a longer gap lets the tapped control open a
+            // dialog between DOWN and UP, and the UP then lands outside it and dismisses
+            // it immediately (the menu "opens and closes" bug).
+            val up = MotionEvent.obtain(downTime, downTime + 30, MotionEvent.ACTION_UP, cx, cy, 0)
+            up.source = android.view.InputDevice.SOURCE_TOUCHSCREEN
+            target.dispatchTouchEvent(up)
             up.recycle()
         }
     }
