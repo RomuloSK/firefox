@@ -265,6 +265,7 @@ class Core(
             )
             .also {
                 WebCompatFeature.install(it)
+                TvFocusFeature.install(it)
             }
     }
 

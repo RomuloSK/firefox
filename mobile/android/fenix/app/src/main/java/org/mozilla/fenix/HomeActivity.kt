@@ -188,6 +188,7 @@ import org.mozilla.fenix.perf.StartupTypeTelemetry
 import org.mozilla.fenix.privacyreport.PrivacyReportNotificationScheduler
 import org.mozilla.fenix.session.PrivateNotificationService
 import org.mozilla.fenix.settings.SupportUtils
+import org.mozilla.fenix.tv.TvCursorController
 import org.mozilla.fenix.shortcut.NewTabShortcutIntentProcessor.Companion.ACTION_OPEN_PRIVATE_TAB
 import org.mozilla.fenix.splashscreen.ApplyExperimentsOperation
 import org.mozilla.fenix.splashscreen.DefaultExperimentsOperationStorage
@@ -213,6 +214,12 @@ import org.mozilla.fenix.utils.changeAppLauncherIcon
  * - browser screen
  */
 @SuppressWarnings("TooManyFunctions", "LargeClass", "LongMethod")
+    /**
+     * Android TV free-roaming pointer. Null on touch devices (never consulted unless a
+     * GeckoView is on screen).
+     */
+    private var tvCursor: TvCursorController? = null
+
 open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, CrashActionDispatcher {
     @VisibleForTesting internal lateinit var binding: ActivityHomeBinding
     lateinit var themeManager: ThemeManager
@@ -574,6 +581,12 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
 
         setContentView(binding.root)
         ProfilerMarkers.addListenerForOnGlobalLayout(components.core.engine, this, binding.root)
+
+        // Android TV: a D-pad cannot reach arbitrary page coordinates or app chrome, so
+        // give it a free-roaming pointer (only used while a GeckoView is visible).
+        (binding.root as? android.view.ViewGroup)?.let { root ->
+            tvCursor = TvCursorController(root, 0f, 0f)
+        }
 
         privateNotificationObserver =
             PrivateNotificationFeature(
@@ -988,6 +1001,8 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
 
     @CallSuper
     override fun onDestroy() {
+        tvCursor?.detach()
+        tvCursor = null
         val startTimeProfiler = components.core.engine.profiler?.getProfilerTime()
 
         super.onDestroy()
@@ -1328,6 +1343,12 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        // Android TV pointer first: it only consumes events while web content is on
+        // screen, so normal D-pad focus navigation still works on the home screen.
+        if (tvCursor?.handleKeyEvent(event) == true) {
+            return true
+        }
+
         // The KEYCODE_MENU event is handled here instead of onKeyDown or onKeyUp because
         // after navigating to another fragment like Settings or Bookmarks, and then back this
         // key event is somehow getting consumed before it reaches onKeyDown or onKeyUp.

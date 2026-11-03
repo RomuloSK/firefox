@@ -1,0 +1,35 @@
+/*
+ * TV focus ring.
+ *
+ * On Android TV there is no pointer: the remote moves DOM focus. Most sites only
+ * style :hover, or ship a focus style that is invisible from 3 metres away, which
+ * makes a page impossible to navigate. Force a strong ring on every focusable
+ * element, and make sure it is not clipped by overflow.
+ */
+
+a:focus,
+button:focus,
+input:focus,
+select:focus,
+textarea:focus,
+summary:focus,
+details:focus,
+[tabindex]:focus,
+[contenteditable]:focus,
+[role="button"]:focus,
+[role="link"]:focus,
+[role="menuitem"]:focus,
+[role="tab"]:focus {
+  outline: 4px solid #7cc7ff !important;
+  outline-offset: 2px !important;
+  /* Keep the ring visible on elements with overflow:hidden ancestors. */
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.85) !important;
+  border-radius: 4px;
+}
+
+/* A focused media element should still be obvious. */
+video:focus,
+audio:focus {
+  outline: 4px solid #7cc7ff !important;
+  outline-offset: -4px !important;
+}

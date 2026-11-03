@@ -1,0 +1,20 @@
+{
+  "manifest_version": 2,
+  "name": "TV Focus Ring",
+  "version": "1.0",
+  "description": "Adds a high-contrast focus ring and D-pad spatial navigation for Android TV.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "tvfocus@mozac.org",
+      "strict_min_version": "115.0"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "css": ["focus.css"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ]
+}
