@@ -103,6 +103,13 @@ class TvCursorController(
         return null
     }
 
+    /** Hides the pointer if shown. @return true when the pointer was visible. */
+    fun hideIfVisible(): Boolean {
+        if (!visible) return false
+        hide()
+        return true
+    }
+
     fun detach() {
         (cursorView.parent as? ViewGroup)?.removeView(cursorView)
     }
@@ -137,8 +144,10 @@ class TvCursorController(
 
             KeyEvent.KEYCODE_BACK -> {
                 // Back hides the cursor first, so it never traps the user in a page.
-                if (event.action == KeyEvent.ACTION_UP && visible) {
-                    hide()
+                // Consume the whole gesture (down and up): the framework acts on
+                // ACTION_DOWN, so consuming only ACTION_UP lets the app exit.
+                if (visible) {
+                    if (event.action == KeyEvent.ACTION_UP) hide()
                     return true
                 }
                 return false

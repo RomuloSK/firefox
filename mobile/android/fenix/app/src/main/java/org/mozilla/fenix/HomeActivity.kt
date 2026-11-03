@@ -588,6 +588,19 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
             tvCursor = TvCursorController(root, 0f, 0f)
         }
 
+        // Android 13+ delivers Back through the back dispatcher rather than as a key
+        // event, so the cursor must dismiss here or Back exits the whole app.
+        val tvBackCallback = object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (tvCursor?.hideIfVisible() != true) {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
+                }
+            }
+        }
+        onBackPressedDispatcher.addCallback(this, tvBackCallback)
+
         privateNotificationObserver =
             PrivateNotificationFeature(
                     applicationContext,

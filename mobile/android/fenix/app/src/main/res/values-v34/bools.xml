@@ -4,5 +4,7 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <resources>
     <!-- See https://bugzilla.mozilla.org/show_bug.cgi?id=1944817 -->
-    <bool name="enableOnBackInvokedCallback">true</bool>
+    <!-- Android TV: keep Back on the key-event path so the D-pad pointer can
+         dismiss itself before the browser navigates back. -->
+    <bool name="enableOnBackInvokedCallback">false</bool>
 </resources>
