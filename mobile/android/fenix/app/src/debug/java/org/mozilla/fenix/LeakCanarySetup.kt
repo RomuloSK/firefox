@@ -24,6 +24,16 @@ object LeakCanarySetup : LeakCanarySetupInterface {
      * @param components Components needed to register LeakCanary on.
      */
     override fun setup(application: Application, components: Components) {
+        // LeakCanary deliberately aborts the process when it is not running in a
+        // debuggable build. The Android TV variant is minified with debuggable=false,
+        // so never install it there.
+        val isDebuggable = (application.applicationInfo.flags and
+            android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        if (!isDebuggable) {
+            logger.info("LeakCanary skipped: build is not debuggable.")
+            return
+        }
+
         logger.info("LeakCanary is setting up.")
         if (!AppWatcher.isInstalled) {
             AppWatcher.manualInstall(

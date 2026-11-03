@@ -21,6 +21,16 @@
         android:name="org.mozilla.fenix.FenixApplication">
 
         <activity android:name="androidx.activity.ComponentActivity" />
+
+        <!--
+          The Android TV variant is minified and not debuggable, and LeakCanary aborts
+          the process at startup in that configuration ("LeakCanary should only be used
+          in debug builds"). Drop its auto-install ContentProvider from the merged
+          manifest; LeakCanarySetup also skips installation for non-debuggable builds.
+        -->
+        <provider
+            android:name="leakcanary.internal.MainProcessAppWatcherInstaller"
+            tools:node="remove" />
     </application>
 
 </manifest>

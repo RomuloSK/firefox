@@ -28,3 +28,8 @@
 
 # Keep code generated from Glean Metrics
 -keep class org.mozilla.fenix.GleanMetrics.** {  *; }
+
+# Test-only annotation that leaks into the release classpath via
+# mozilla.components.browser.state.store.BrowserStore. Only referenced by test APIs,
+# so it is safe to warn-suppress rather than keep.
+-dontwarn org.mockito.DoNotMock

@@ -105,8 +105,15 @@ android {
 
     buildTypes {
         debug {
-            shrinkResources = false
-            minifyEnabled = false
+            // Android TV / low-storage devices: run R8 so the APK is small enough to install
+            // and so startup does not pay for 82MB of unminified dex.
+            // NOTE: must stay non-debuggable, otherwise AGP silently disables R8 optimization
+            // for debuggable builds and the APK stays ~164MB.
+            debuggable = false
+            shrinkResources = true
+            minifyEnabled = true
+            proguardFiles = [getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro']
+            matchingFallbacks = ['release']
             applicationIdSuffix ".fenix.debug"
             resValue "bool", "IS_DEBUG", "true"
             pseudoLocalesEnabled = true
@@ -271,7 +278,10 @@ android {
         jniLibs {
             excludes += ["**/armeabi/*.so", "**/mips/*.so", "**/mips64/*.so", "**/x86/*.so"]
             if (!isAppBundle) {
-                useLegacyPackaging = true
+                // Android TV: install libs uncompressed and load them directly from the APK.
+                // Legacy packaging extracts ~150MB of .so into /data/app at install time,
+                // which fails on a 4GB TV box and wastes space even when it succeeds.
+                useLegacyPackaging = false
             }
         }
     }
