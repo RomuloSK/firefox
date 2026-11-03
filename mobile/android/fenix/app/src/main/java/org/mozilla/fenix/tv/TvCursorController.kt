@@ -36,11 +36,19 @@ class TvCursorController(
 ) {
     private val density = root.resources.displayMetrics.density
     private val cursorRadiusPx = 18f * density
-    private val stepPx = 26f * density
-    private val fastStepPx = 52f * density
+    // Precision first: a gentle step lets the user land on individual links, which is
+    // impossible if every press moves a large distance. Holding the direction
+    // accelerates so crossing the screen does not take dozens of presses.
+    private val baseStepPx = 11f * density
+    private val midStepPx = 22f * density
+    private val fastStepPx = 40f * density
 
-    /** Pixels from the edge where a held direction starts scrolling instead of moving. */
-    private val edgePx = 44f * density
+    /**
+     * Pixels from the edge where a *held* direction scrolls instead of moving.
+     * Small on purpose: controls frequently sit at the very bottom of a page, and a
+     * large band makes them impossible to point at.
+     */
+    private val edgePx = 16f * density
 
     private var cachedGecko: View? = null
 
@@ -118,6 +126,10 @@ class TvCursorController(
      * @return true when the key was consumed by the cursor.
      */
     fun handleKeyEvent(event: KeyEvent): Boolean {
+        // A dialog, menu or other window above us owns input focus: let the framework
+        // do normal D-pad traversal there instead of stealing the keys for the pointer.
+        if (!root.hasWindowFocus()) return false
+
         val gecko = geckoView() ?: return false
         if (!gecko.isShown) return false
 
@@ -176,7 +188,11 @@ class TvCursorController(
     }
 
     private fun move(event: KeyEvent, gecko: View) {
-        val step = if (event.repeatCount > 4) fastStepPx else stepPx
+        val step = when {
+            event.repeatCount >= 9 -> fastStepPx
+            event.repeatCount >= 4 -> midStepPx
+            else -> baseStepPx
+        }
         var dx = 0f
         var dy = 0f
         when (event.keyCode) {
@@ -204,14 +220,14 @@ class TvCursorController(
         // reads a long article without hunting for a scrollbar.
         val nearTop = y < edgePx
         val nearBottom = y > screenH - edgePx
-        if (dy > 0 && nearBottom) {
-            sendKey(gecko, KeyEvent.KEYCODE_PAGE_DOWN)
-        } else if (dy < 0 && nearTop) {
-            sendKey(gecko, KeyEvent.KEYCODE_PAGE_UP)
+        if (event.repeatCount >= 2) {
+            if (dy > 0 && nearBottom) sendKey(gecko, KeyEvent.KEYCODE_PAGE_DOWN)
+            if (dy < 0 && nearTop) sendKey(gecko, KeyEvent.KEYCODE_PAGE_UP)
         }
 
         x = nx
         y = ny
+        android.util.Log.d("TvCursor", "move key=${event.keyCode} repeat=${event.repeatCount} step=$step -> x=$x y=$y")
         positionCursor()
         sendHover(gecko)
     }

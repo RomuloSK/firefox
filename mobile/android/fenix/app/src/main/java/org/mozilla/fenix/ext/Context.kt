@@ -200,3 +200,14 @@ fun Context.recordEventInNimbus(eventId: String) = components.nimbus.events.reco
 
 /** Returns true if the toolbar is position at the bottom. */
 fun Context.isToolbarAtBottom() = components.settings.toolbarPosition == ToolbarPosition.BOTTOM
+
+/**
+ * True when the app is running on an Android TV / leanback device.
+ *
+ * TV builds need a different interaction model, and several phone-only prompts make
+ * no sense there.
+ */
+fun Context.isAndroidTv(): Boolean {
+    val uiModeManager = getSystemService(Context.UI_MODE_SERVICE) as? android.app.UiModeManager
+    return uiModeManager?.currentModeType == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
+}

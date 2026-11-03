@@ -60,6 +60,7 @@ import org.mozilla.fenix.ext.TALL_SCREEN_HEIGHT_DP
 import org.mozilla.fenix.ext.WIDE_SCREEN_WIDTH_DP
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.getPreferenceKey
+import org.mozilla.fenix.ext.isAndroidTv
 import org.mozilla.fenix.home.pocket.ContentRecommendationsFeatureHelper
 import org.mozilla.fenix.home.topsites.TopSitesConfigConstants.TOP_SITES_MAX_COUNT
 import org.mozilla.fenix.nimbus.DefaultBrowserPrompt
@@ -3005,6 +3006,11 @@ class Settings(
     fun shouldShowSetAsDefaultPrompt(
         nimbusFeature: DefaultBrowserPrompt = FxNimbus.features.defaultBrowserPrompt.value()
     ): Boolean {
+        // Android TV: this opens a system "choose an app" dialog that steals focus,
+        // cannot be dismissed with Back and is not reachable with the pointer.
+        // Browsers are rarely set from a TV launcher, so never prompt there.
+        if (appContext.isAndroidTv()) return false
+
         if (!nimbusFeature.enabled) return false
 
         if (continuousOnboardingFeatureEnabled && !continuousOnboardingCompleted) return false
