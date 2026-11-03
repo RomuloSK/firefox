@@ -22,6 +22,7 @@ import org.mozilla.fenix.Config
 import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.nimbus.FxNimbus
+import org.mozilla.fenix.ext.isAndroidTv
 import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.GeckoRuntimeSettings
 
@@ -144,6 +145,16 @@ object GeckoProvider {
 
         if (FxNimbus.features.fission.value().shouldUseNimbus) {
             builder.fissionEnabled(FxNimbus.features.fission.value().enabled)
+        }
+
+        // Android TV boxes have 2-3 GB RAM and weak CPUs. Site isolation spawns one
+        // content process per site, plus isolated/app-zygote processes, which costs
+        // both startup time and memory. A single content process is the right trade
+        // here, and it also keeps the browser stable under light tab use.
+        if (context.isAndroidTv()) {
+            builder.fissionEnabled(false)
+            builder.isolatedProcessEnabled(false)
+            builder.appZygoteProcessEnabled(false)
         }
 
         return builder.build()

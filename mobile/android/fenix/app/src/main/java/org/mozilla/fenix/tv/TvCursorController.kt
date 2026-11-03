@@ -130,8 +130,9 @@ class TvCursorController(
         // do normal D-pad traversal there instead of stealing the keys for the pointer.
         if (!root.hasWindowFocus()) return false
 
-        val gecko = geckoView() ?: return false
-        if (!gecko.isShown) return false
+        // The pointer works on any screen (home, settings, menus), so do not require a
+        // GeckoView here. It is only needed for hover and edge scrolling.
+        val gecko = geckoView()
 
         when (event.keyCode) {
             KeyEvent.KEYCODE_DPAD_UP,
@@ -168,16 +169,17 @@ class TvCursorController(
         return false
     }
 
-    private fun show(gecko: View) {
+    private fun show(gecko: View?) {
         visible = true
         cursorView.visibility = View.VISIBLE
-        // Start from the middle of the content if we have never been moved.
-        if (x <= 0f || y <= 0f) {
-            val loc = IntArray(2)
-            gecko.getLocationOnScreen(loc)
-            x = loc[0] + gecko.width / 2f
-            y = loc[1] + gecko.height / 2f
-        }
+        // Start from the middle of whatever is on screen. Always recentring avoids a
+        // stale pointer after moving between the browser and the home screen, where a
+        // tap would otherwise land on the wrong control.
+        val target = gecko ?: root
+        val loc = IntArray(2)
+        target.getLocationOnScreen(loc)
+        x = loc[0] + target.width / 2f
+        y = loc[1] + target.height / 2f
         positionCursor()
         sendHover(gecko)
     }
@@ -187,7 +189,7 @@ class TvCursorController(
         cursorView.visibility = View.GONE
     }
 
-    private fun move(event: KeyEvent, gecko: View) {
+    private fun move(event: KeyEvent, gecko: View?) {
         val step = when {
             event.repeatCount >= 9 -> fastStepPx
             event.repeatCount >= 4 -> midStepPx
@@ -211,8 +213,10 @@ class TvCursorController(
         if (atEdge) {
             // At the screen edge there is nowhere left to point, so treat the held
             // direction as "keep reading": scroll the page.
-            if (dy > 0) sendKey(gecko, KeyEvent.KEYCODE_PAGE_DOWN)
-            if (dy < 0) sendKey(gecko, KeyEvent.KEYCODE_PAGE_UP)
+            if (gecko != null) {
+                if (dy > 0) sendKey(gecko, KeyEvent.KEYCODE_PAGE_DOWN)
+                if (dy < 0) sendKey(gecko, KeyEvent.KEYCODE_PAGE_UP)
+            }
             return
         }
 
@@ -220,7 +224,7 @@ class TvCursorController(
         // reads a long article without hunting for a scrollbar.
         val nearTop = y < edgePx
         val nearBottom = y > screenH - edgePx
-        if (event.repeatCount >= 2) {
+        if (gecko != null && event.repeatCount >= 2) {
             if (dy > 0 && nearBottom) sendKey(gecko, KeyEvent.KEYCODE_PAGE_DOWN)
             if (dy < 0 && nearTop) sendKey(gecko, KeyEvent.KEYCODE_PAGE_UP)
         }
@@ -244,7 +248,8 @@ class TvCursorController(
         return (x - loc[0]) to (y - loc[1])
     }
 
-    private fun sendHover(gecko: View) {
+    private fun sendHover(gecko: View?) {
+        if (gecko == null) return
         val (lx, ly) = localPoint(gecko)
         // Never dispatch into Gecko synchronously from a key event: during page load it
         // can block long enough to trip the input-dispatch ANR watchdog.
@@ -256,7 +261,7 @@ class TvCursorController(
         }
     }
 
-    private fun tap(gecko: View) {
+    private fun tap(gecko: View?) {
         // Dispatch through the root so the tap reaches whatever is under the cursor:
         // page content, Fenix's toolbar or a menu. Routing straight to GeckoView would
         // make the app's own chrome unreachable, which is the main reason a TV browser

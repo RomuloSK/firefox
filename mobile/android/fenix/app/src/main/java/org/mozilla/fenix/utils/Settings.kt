@@ -726,7 +726,9 @@ class Settings(
     var isTelemetryEnabled by
         booleanPreference(
             appContext.getPreferenceKey(R.string.pref_key_telemetry),
-            default = true,
+            // Android TV: no telemetry by default. This also avoids initialising and
+            // uploading Glean pings during startup on a slow set-top box.
+            default = !appContext.isAndroidTv(),
         )
 
     var isMarketingTelemetryEnabled by
