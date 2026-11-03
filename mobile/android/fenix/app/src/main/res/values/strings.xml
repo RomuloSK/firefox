@@ -4244,4 +4244,22 @@
     <string name="reader_mode_panel_listen_content_description">Read Aloud</string>
     <!-- Content description for media player displayed in Reader Mode when the Listen to Page (Read Aloud) feature is selected -->
     <string name="reader_mode_panel_media_player_content_description">Media Player</string>
+    <!-- Android TV: which entries the browser menu shows. -->
+    <string name="pref_key_tv_menu_share">pref_key_tv_menu_share</string>
+    <string name="pref_key_tv_menu_extensions">pref_key_tv_menu_extensions</string>
+    <string name="pref_key_tv_menu_downloads">pref_key_tv_menu_downloads</string>
+    <string name="pref_key_tv_menu_passwords">pref_key_tv_menu_passwords</string>
+    <string name="pref_key_tv_menu_account">pref_key_tv_menu_account</string>
+    <string name="pref_key_tv_menu_ip_protection">pref_key_tv_menu_ip_protection</string>
+    <string name="pref_key_tv_menu_more">pref_key_tv_menu_more</string>
+
+    <string name="preferences_category_tv_menu">Browser menu</string>
+    <string name="preferences_tv_menu_description">Choose which extra entries appear in the browser menu on Android TV.</string>
+    <string name="preferences_tv_menu_share">Share</string>
+    <string name="preferences_tv_menu_extensions">Extensions</string>
+    <string name="preferences_tv_menu_downloads">Downloads</string>
+    <string name="preferences_tv_menu_passwords">Passwords</string>
+    <string name="preferences_tv_menu_account">Mozilla account</string>
+    <string name="preferences_tv_menu_ip_protection">VPN (IP protection)</string>
+    <string name="preferences_tv_menu_more">More settings submenu</string>
 </resources>

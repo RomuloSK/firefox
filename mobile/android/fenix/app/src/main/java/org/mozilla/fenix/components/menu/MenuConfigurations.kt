@@ -116,15 +116,59 @@ object MenuConfigurations {
         return if (isToolbarAtBottom || isExpandedToolbarEnabled) rest + navSection else listOf(navSection) + rest
     }
 
-    /** The menu shown on the home screen. */
-    fun home(): List<MenuSectionConfiguration> =
+    /**
+     * The menu shown while browsing on Android TV.
+     *
+     * Phone-only surfaces are removed: sharing, add-on management, VPN, accounts,
+     * downloads, passwords, print/PDF and the secondary "More" sheet. What remains is
+     * everything a remote user actually needs from a 10-foot browser.
+     */
+    fun browserForTv(): List<MenuSectionConfiguration> =
         listOf(
             MenuSectionConfiguration(
-                id = HOME_MENU_GROUP_1_ID,
+                id = BROWSER_MENU_NAVIGATION_ID,
+                presentationMode = Grid,
+                items = listOf(Back, Forward, Refresh),
+                isSticky = true,
+            ),
+            MenuSectionConfiguration(
+                id = BROWSER_MENU_GROUP_3_ID,
                 presentationMode = Row,
-                items = listOf(DefaultBrowserBanner),
-            )
+                items = listOf(Bookmark, FindInPage, DesktopSite),
+            ),
+            MenuSectionConfiguration(
+                id = BROWSER_MENU_GROUP_4_ID,
+                presentationMode = Grid,
+                items = listOf(History, Bookmarks),
+            ),
+            MenuSectionConfiguration(
+                id = BROWSER_MENU_GROUP_5_ID,
+                presentationMode = Row,
+                items = listOf(Settings),
+            ),
+            MenuSectionConfiguration(
+                id = BROWSER_MENU_GROUP_6_ID,
+                presentationMode = Row,
+                items = listOf(Quit),
+            ),
         )
+
+    /** The menu shown on the home screen. */
+
+    fun home(isTv: Boolean = false): List<MenuSectionConfiguration> =
+        if (isTv) {
+            // The only home menu item is the "set as default" banner, which TV builds
+            // never show.
+            emptyList()
+        } else {
+            listOf(
+                MenuSectionConfiguration(
+                    id = HOME_MENU_GROUP_1_ID,
+                    presentationMode = Row,
+                    items = listOf(DefaultBrowserBanner),
+                )
+            )
+        }
 
     /** The menu shown in custom tabs. */
     fun customTab(): List<MenuSectionConfiguration> = emptyList()

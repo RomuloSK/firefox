@@ -272,4 +272,43 @@
             android:title="@string/preferences_start_profiler"
             app:isPreferenceVisible="false" />
     </androidx.preference.PreferenceCategory>
+    <androidx.preference.PreferenceCategory
+        android:title="@string/preferences_category_tv_menu"
+        android:layout="@layout/preference_category_no_icon_style">
+
+        <androidx.preference.Preference
+            android:key="@string/preferences_tv_menu_description"
+            android:title="@string/preferences_tv_menu_description"
+            android:selectable="false"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreference
+            android:key="@string/pref_key_tv_menu_share"
+            android:title="@string/preferences_tv_menu_share"
+            app:iconSpaceReserved="false" />
+        <SwitchPreference
+            android:key="@string/pref_key_tv_menu_extensions"
+            android:title="@string/preferences_tv_menu_extensions"
+            app:iconSpaceReserved="false" />
+        <SwitchPreference
+            android:key="@string/pref_key_tv_menu_downloads"
+            android:title="@string/preferences_tv_menu_downloads"
+            app:iconSpaceReserved="false" />
+        <SwitchPreference
+            android:key="@string/pref_key_tv_menu_passwords"
+            android:title="@string/preferences_tv_menu_passwords"
+            app:iconSpaceReserved="false" />
+        <SwitchPreference
+            android:key="@string/pref_key_tv_menu_account"
+            android:title="@string/preferences_tv_menu_account"
+            app:iconSpaceReserved="false" />
+        <SwitchPreference
+            android:key="@string/pref_key_tv_menu_ip_protection"
+            android:title="@string/preferences_tv_menu_ip_protection"
+            app:iconSpaceReserved="false" />
+        <SwitchPreference
+            android:key="@string/pref_key_tv_menu_more"
+            android:title="@string/preferences_tv_menu_more"
+            app:iconSpaceReserved="false" />
+    </androidx.preference.PreferenceCategory>
 </androidx.preference.PreferenceScreen>

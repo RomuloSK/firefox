@@ -3057,6 +3057,56 @@ class Settings(
         coldStartsBetweenSetAsDefaultPrompts = 0
     }
 
+    // ---------------------------------------------------------------------------------
+    // Android TV browser menu
+    //
+    // The TV menu drops phone-only surfaces, but "phone-only" is a judgement call: a
+    // user with a keyboard remote may want Share, and extensions are useful on a TV.
+    // These switches let the menu be tuned from Settings instead of being fixed.
+    // ---------------------------------------------------------------------------------
+
+    var tvMenuShowShare by booleanPreference(
+        key = appContext.getPreferenceKey(R.string.pref_key_tv_menu_share),
+        default = false,
+        persistDefaultIfNotExists = true,
+    )
+
+    var tvMenuShowExtensions by booleanPreference(
+        key = appContext.getPreferenceKey(R.string.pref_key_tv_menu_extensions),
+        default = true,
+        persistDefaultIfNotExists = true,
+    )
+
+    var tvMenuShowDownloads by booleanPreference(
+        key = appContext.getPreferenceKey(R.string.pref_key_tv_menu_downloads),
+        default = false,
+        persistDefaultIfNotExists = true,
+    )
+
+    var tvMenuShowPasswords by booleanPreference(
+        key = appContext.getPreferenceKey(R.string.pref_key_tv_menu_passwords),
+        default = false,
+        persistDefaultIfNotExists = true,
+    )
+
+    var tvMenuShowAccount by booleanPreference(
+        key = appContext.getPreferenceKey(R.string.pref_key_tv_menu_account),
+        default = false,
+        persistDefaultIfNotExists = true,
+    )
+
+    var tvMenuShowIpProtection by booleanPreference(
+        key = appContext.getPreferenceKey(R.string.pref_key_tv_menu_ip_protection),
+        default = false,
+        persistDefaultIfNotExists = true,
+    )
+
+    var tvMenuShowMore by booleanPreference(
+        key = appContext.getPreferenceKey(R.string.pref_key_tv_menu_more),
+        default = false,
+        persistDefaultIfNotExists = true,
+    )
+
     /**
      * A timestamp indicating the end of a deferral period, initiated when users deny submitted a crash, during which we
      * avoid showing the unsubmitted crash dialog.
@@ -3398,7 +3448,9 @@ class Settings(
     var longfoxEnabled by
         booleanPreference(
             key = appContext.getPreferenceKey(R.string.pref_key_enable_longfox),
-            default = { FxNimbus.features.longfox.value().enabled },
+            // Android TV: this is a phone-only promotional card ("Help catch trackers")
+            // that adds a Compose card to the home screen.
+            default = { !appContext.isAndroidTv() && FxNimbus.features.longfox.value().enabled },
         )
 
     /**

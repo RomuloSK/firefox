@@ -126,6 +126,11 @@ import org.mozilla.fenix.theme.FirefoxTheme
 @Composable
 fun MainMenu(
     accessPoint: MenuAccessPoint,
+    showShare: Boolean = true,
+    showExtensions: Boolean = true,
+    showMore: Boolean = true,
+    showDownloads: Boolean = true,
+    showAccount: Boolean = true,
     account: Account?,
     accountState: AccountState,
     showQuitMenu: Boolean,
@@ -208,6 +213,7 @@ fun MainMenu(
                     onRefreshButtonClick = onRefreshButtonClick,
                     onStopButtonClick = onStopButtonClick,
                     onShareButtonClick = onShareButtonClick,
+                    showShare = showShare,
                     goBackState = if (canGoBack) MenuItemState.ENABLED else MenuItemState.DISABLED,
                     goForwardState = if (canGoForward) MenuItemState.ENABLED else MenuItemState.DISABLED,
                 )
@@ -232,6 +238,7 @@ fun MainMenu(
                     onRefreshButtonClick = onRefreshButtonClick,
                     onStopButtonClick = onStopButtonClick,
                     onShareButtonClick = onShareButtonClick,
+                    showShare = showShare,
                     goBackState = if (canGoBack) MenuItemState.ENABLED else MenuItemState.DISABLED,
                     goForwardState = if (canGoForward) MenuItemState.ENABLED else MenuItemState.DISABLED,
                 )
@@ -269,7 +276,7 @@ fun MainMenu(
             }
         }
 
-        if (accessPoint == MenuAccessPoint.Home) {
+        if (accessPoint == MenuAccessPoint.Home && showExtensions) {
             MenuGroup {
                 ExtensionsMenuItem(
                     inCustomTab = false,
@@ -286,6 +293,7 @@ fun MainMenu(
 
         if (accessPoint == MenuAccessPoint.Browser) {
             ToolsAndActionsMenuGroup(
+                showMore = showMore,
                 isBookmarked = isBookmarked,
                 isDesktopMode = isDesktopMode,
                 isPdf = isPdf,
@@ -309,6 +317,7 @@ fun MainMenu(
 
         LibraryMenuGroup(
             isDownloadHighlighted = isDownloadHighlighted,
+            showDownloads = showDownloads,
             showPasswords = showPasswords,
             onBookmarksMenuClick = onBookmarksMenuClick,
             onHistoryMenuClick = onHistoryMenuClick,
@@ -317,11 +326,13 @@ fun MainMenu(
         )
 
         MenuGroup {
-            MozillaAccountMenuItem(
-                account = account,
-                accountState = accountState,
-                onClick = onMozillaAccountButtonClick,
-            )
+            if (showAccount) {
+                MozillaAccountMenuItem(
+                    account = account,
+                    accountState = accountState,
+                    onClick = onMozillaAccountButtonClick,
+                )
+            }
 
             if (accessPoint == MenuAccessPoint.Home) {
                 MenuItem(
@@ -363,6 +374,7 @@ private fun QuitMenuGroup(onQuitMenuClick: () -> Unit) {
 @Suppress("LongParameterList", "LongMethod", "CognitiveComplexMethod")
 @Composable
 private fun ToolsAndActionsMenuGroup(
+    showMore: Boolean = true,
     isBookmarked: Boolean,
     isDesktopMode: Boolean,
     isPdf: Boolean,
@@ -442,6 +454,7 @@ private fun ToolsAndActionsMenuGroup(
             )
         }
 
+        // Extensions are a first-class feature on TV too, so they stay in the menu.
         ExtensionsMenuItem(
             inCustomTab = false,
             isExtensionsProcessDisabled = isExtensionsProcessDisabled,
@@ -453,17 +466,19 @@ private fun ToolsAndActionsMenuGroup(
             extensionSubmenu = extensionSubmenu,
         )
 
-        if (!moreMenuExpanded) {
-            MoreMenuButtonGroup(
-                isMoreMenuHighlighted = isMoreMenuHighlighted,
-                onMoreMenuClick = onMoreMenuClick,
+        if (showMore) {
+            if (!moreMenuExpanded) {
+                MoreMenuButtonGroup(
+                    isMoreMenuHighlighted = isMoreMenuHighlighted,
+                    onMoreMenuClick = onMoreMenuClick,
+                )
+            }
+
+            ExpandableMenuItemAnimation(
+                isExpanded = moreMenuExpanded,
+                content = moreSettingsSubmenu,
             )
         }
-
-        ExpandableMenuItemAnimation(
-            isExpanded = moreMenuExpanded,
-            content = moreSettingsSubmenu,
-        )
     }
 }
 
@@ -507,6 +522,7 @@ private fun MoreMenuButtonGroup(
 @Suppress("LongMethod")
 private fun LibraryMenuGroup(
     showPasswords: Boolean,
+    showDownloads: Boolean = true,
     isDownloadHighlighted: Boolean = false,
     onBookmarksMenuClick: () -> Unit,
     onHistoryMenuClick: () -> Unit,
@@ -532,7 +548,11 @@ private fun LibraryMenuGroup(
             this.collectionInfo =
                 CollectionInfo(
                     rowCount = 1,
-                    columnCount = if (showPasswords) 4 else 3,
+                    columnCount = when {
+                        showDownloads && showPasswords -> 4
+                        showDownloads || showPasswords -> 3
+                        else -> 2
+                    },
                 )
         },
         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -558,17 +578,19 @@ private fun LibraryMenuGroup(
             onClick = onBookmarksMenuClick,
         )
 
-        Spacer(Modifier.width(spacerWidth))
+        if (showDownloads) {
+            Spacer(Modifier.width(spacerWidth))
 
-        LibraryMenuItem(
-            modifier = Modifier.weight(1f).fillMaxHeight(),
-            isHighlighted = isDownloadHighlighted,
-            iconRes = iconsR.drawable.mozac_ic_download_24,
-            labelRes = R.string.library_downloads,
-            shape = if (showPasswords) middleShape else rightShape,
-            index = 2,
-            onClick = onDownloadsMenuClick,
-        )
+            LibraryMenuItem(
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                isHighlighted = isDownloadHighlighted,
+                iconRes = iconsR.drawable.mozac_ic_download_24,
+                labelRes = R.string.library_downloads,
+                shape = if (showPasswords) middleShape else rightShape,
+                index = 2,
+                onClick = onDownloadsMenuClick,
+            )
+        }
 
         if (showPasswords) {
             Spacer(Modifier.width(spacerWidth))

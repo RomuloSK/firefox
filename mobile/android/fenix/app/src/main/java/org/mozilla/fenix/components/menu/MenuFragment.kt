@@ -54,6 +54,7 @@ import org.mozilla.fenix.components.menu.middleware.MenuTelemetryMiddleware
 import org.mozilla.fenix.ext.isToolbarAtBottom
 import org.mozilla.fenix.ext.openSetDefaultBrowserOption
 import org.mozilla.fenix.ext.requireComponents
+import org.mozilla.fenix.ext.isAndroidTv
 import org.mozilla.fenix.theme.FirefoxTheme
 import org.mozilla.fenix.translations.TranslationsEnabledSettings
 
@@ -261,11 +262,15 @@ class MenuFragment : BottomSheetDialogFragment() {
     private fun buildMenuConfigurationFor(menuAccessPoint: MenuAccessPoint) =
         when (menuAccessPoint) {
             MenuAccessPoint.Browser ->
-                MenuConfigurations.browser(
-                    isToolbarAtBottom = requireContext().isToolbarAtBottom(),
-                    isExpandedToolbarEnabled = requireComponents.settings.shouldUseExpandedToolbar,
-                )
-            MenuAccessPoint.Home -> MenuConfigurations.home()
+                if (requireContext().isAndroidTv()) {
+                    MenuConfigurations.browserForTv()
+                } else {
+                    MenuConfigurations.browser(
+                        isToolbarAtBottom = requireContext().isToolbarAtBottom(),
+                        isExpandedToolbarEnabled = requireComponents.settings.shouldUseExpandedToolbar,
+                    )
+                }
+            MenuAccessPoint.Home -> MenuConfigurations.home(isTv = requireContext().isAndroidTv())
             MenuAccessPoint.External -> MenuConfigurations.customTab()
         }
 }

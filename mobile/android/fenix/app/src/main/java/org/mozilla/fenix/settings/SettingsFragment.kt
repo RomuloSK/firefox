@@ -82,6 +82,7 @@ import org.mozilla.fenix.ext.openInNewTab
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.showToolbar
 import org.mozilla.fenix.ext.showToolbarWithIconButton
+import org.mozilla.fenix.ext.isAndroidTv
 import org.mozilla.fenix.home.maybeNavigateToSystemSetToDefaultAction
 import org.mozilla.fenix.home.maybeRequestDefaultBrowserPrompt
 import org.mozilla.fenix.nimbus.FxNimbus
@@ -212,6 +213,21 @@ class SettingsFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFragment 
 
         findPreference<Preference>(getPreferenceKey(R.string.pref_key_ai_controls))?.isVisible =
             requireComponents.settings.aiControlsFeatureFlagEnabled
+
+        if (requireContext().isAndroidTv()) {
+            // Phone-only surfaces that make no sense on a TV:
+            // - account/sync needs a phone to sign in
+            // - "set as default browser" opens a system role dialog that steals focus
+            // - the built-in VPN has no TV client
+            findPreference<Preference>(getPreferenceKey(R.string.pref_key_sign_in))?.isVisible = false
+            findPreference<PreferenceCategory>(
+                getPreferenceKey(R.string.pref_key_account_category),
+            )?.isVisible = false
+            findPreference<Preference>(getPreferenceKey(R.string.pref_key_make_default_browser))
+                ?.isVisible = false
+            findPreference<Preference>(getPreferenceKey(R.string.pref_key_ip_protection_settings))
+                ?.isVisible = false
+        }
 
         if (requireComponents.settings.accountSettingsNewUi) {
             findPreference<PreferenceCategory>(getPreferenceKey(R.string.pref_key_account_category))

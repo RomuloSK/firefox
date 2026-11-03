@@ -134,6 +134,16 @@ class TvCursorController(
         // GeckoView here. It is only needed for hover and edge scrolling.
         val gecko = geckoView()
 
+        // Classic View-based screens (the Settings preference lists, for example) do
+        // their own D-pad focus traversal and scrolling. Taking the keys there makes
+        // those lists unscrollable, so yield unless focus is on Compose UI or Gecko.
+        val focused = root.findFocus()
+        if (focused != null && focused !== gecko) {
+            val name = focused.javaClass.name
+            val pointerOwned = name.contains("AndroidComposeView") || name.contains("GeckoView")
+            if (!pointerOwned) return false
+        }
+
         when (event.keyCode) {
             KeyEvent.KEYCODE_DPAD_UP,
             KeyEvent.KEYCODE_DPAD_DOWN,

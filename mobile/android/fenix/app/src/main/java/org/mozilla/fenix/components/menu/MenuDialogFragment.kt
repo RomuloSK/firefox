@@ -108,6 +108,7 @@ import org.mozilla.fenix.ext.openSetDefaultBrowserOption
 import org.mozilla.fenix.ext.openToBrowser
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.runIfFragmentIsAttached
+import org.mozilla.fenix.ext.isAndroidTv
 import org.mozilla.fenix.ipprotection.ui.IPProtectionSnackbarBinding
 import org.mozilla.fenix.nimbus.FxNimbus
 import org.mozilla.fenix.settings.SupportUtils
@@ -528,8 +529,14 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                             }
                                 .collectAsState(initial = false)
 
+                            val isTvMenu = LocalContext.current.isAndroidTv()
                             MainMenu(
                                 accessPoint = args.accesspoint,
+                                showShare = !isTvMenu || settings.tvMenuShowShare,
+                                showExtensions = !isTvMenu || settings.tvMenuShowExtensions,
+                                showMore = !isTvMenu || settings.tvMenuShowMore,
+                                showDownloads = !isTvMenu || settings.tvMenuShowDownloads,
+                                showAccount = !isTvMenu || settings.tvMenuShowAccount,
                                 account = account,
                                 accountState = accountState,
                                 showQuitMenu = settings.shouldDeleteBrowsingDataOnQuit,
@@ -553,8 +560,11 @@ class MenuDialogFragment : BottomSheetDialogFragment() {
                                 isDownloadHighlighted = isDownloadHighlighted,
                                 webExtensionMenuCount = webExtensionsCount,
                                 isAllWebExtensionsDisabled = isAllWebExtensionsDisabled,
-                                showIPProtection = components.ipProtection.store.state.isEligible,
-                                showPasswords = settings.isAutofillSupported,
+                                showIPProtection =
+                                    components.ipProtection.store.state.isEligible &&
+                                        (!isTvMenu || settings.tvMenuShowIpProtection),
+                                showPasswords = settings.isAutofillSupported &&
+                                    (!isTvMenu || settings.tvMenuShowPasswords),
                                 ipProtectionMenuState = ipProtectionMenuState,
                                 onMozillaAccountButtonClick = {
                                     menuStore.dispatch(
