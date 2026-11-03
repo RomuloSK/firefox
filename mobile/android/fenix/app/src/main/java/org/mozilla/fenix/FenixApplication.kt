@@ -36,6 +36,7 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
@@ -125,6 +126,7 @@ import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.containsQueryParameters
 import org.mozilla.fenix.ext.isCustomEngine
 import org.mozilla.fenix.ext.isKnownSearchDomain
+import org.mozilla.fenix.ext.isAndroidTv
 import org.mozilla.fenix.home.collections.migration.CollectionsToTabGroupsMigrationWorker
 import org.mozilla.fenix.home.topsites.TopSitesConfigConstants.TOP_SITES_PROVIDER_LIMIT
 import org.mozilla.fenix.home.topsites.TopSitesConfigConstants.TOP_SITES_PROVIDER_MAX_THRESHOLD
@@ -152,6 +154,9 @@ import org.mozilla.fenix.theme.ThemeProvider
 import org.mozilla.fenix.utils.Settings
 import org.mozilla.fenix.utils.isLargeScreenSize
 import org.mozilla.fenix.wallpapers.Wallpaper
+
+/** Let the home screen paint before paying for Gecko initialisation on TV. */
+private const val TV_ENGINE_WARMUP_DELAY_MS = 700L
 
 private const val RAM_THRESHOLD_MEGABYTES = 1024
 private const val BYTES_TO_MEGABYTES_CONVERSION = 1024.0 * 1024.0
@@ -312,6 +317,10 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
     // wait until we do. Note that Glean initialization is asynchronous any may not be finished
     // when this method returns.
     private fun maybeInitializeGlean() {
+        // Android TV: telemetry is off by default and this box cannot afford the extra
+        // native work during startup.
+        if (isAndroidTv()) return
+
         // We delay the Glean initialization until we have user consent from onboarding.
         // If onboarding is disabled (when in local builds), continue to initialize Glean.
         if (components.fenixOnboarding.userHasBeenOnboarded() || !FeatureFlags.onboardingFeatureEnabled) {
@@ -360,7 +369,20 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
         // before pages can begin to render.
         // Here we access the engine property, which will cause the lazy property getter to
         // construct the instance.
-        components.core.engine
+        //
+        // Android TV: constructing the engine loads ~117MB of libxul and is the single
+        // largest startup cost, yet the home screen does not need Gecko. Warm it shortly
+        // after the first frame instead, so Home paints sooner and the first page usually
+        // finds the engine already initializing.
+        if (isAndroidTv()) {
+            applicationScope.launch {
+                delay(TV_ENGINE_WARMUP_DELAY_MS)
+                components.core.engine
+                initializeWebExtensionSupport()
+            }
+        } else {
+            components.core.engine
+        }
 
         // Kick off initialization of Glean backend off-thread. Glean will continue to queue
         // metric samples until the backend is ready. If we don't have data-upload consent then
@@ -383,7 +405,9 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
         setDayNightTheme()
         components.strictMode.enableStrictMode(true)
 
-        initializeWebExtensionSupport()
+        if (!isAndroidTv()) {
+            initializeWebExtensionSupport()
+        }
 
         // Make sure to call this function before registering a storage worker
         // (e.g. components.core.historyStorage.registerStorageMaintenanceWorker())
@@ -441,7 +465,16 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
 
         visibilityLifecycleCallback = VisibilityLifecycleCallback(getSystemService())
         registerActivityLifecycleCallbacks(visibilityLifecycleCallback)
-        registerActivityLifecycleCallbacks(MarkersActivityLifecycleCallbacks(components.core.engine))
+        if (isAndroidTv()) {
+            applicationScope.launch {
+                delay(TV_ENGINE_WARMUP_DELAY_MS + 200)
+                registerActivityLifecycleCallbacks(
+                    MarkersActivityLifecycleCallbacks(components.core.engine),
+                )
+            }
+        } else {
+            registerActivityLifecycleCallbacks(MarkersActivityLifecycleCallbacks(components.core.engine))
+        }
 
         components.appStartReasonProvider.registerInAppOnCreate(this)
         components.startupActivityLog.registerInAppOnCreate(this)

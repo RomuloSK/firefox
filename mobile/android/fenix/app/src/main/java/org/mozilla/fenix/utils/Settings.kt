@@ -201,7 +201,11 @@ class Settings(
         lazyFeatureFlagBooleanPreference(
             appContext.getPreferenceKey(R.string.pref_key_pocket_homescreen_recommendations),
             featureFlag = ContentRecommendationsFeatureHelper.isContentRecommendationsFeatureEnabled(appContext),
-            defaultValue = { homescreenSections[HomeScreenSection.POCKET] == true },
+            // Android TV: the stories carousel is a phone/home-screen feature. It costs a
+            // network fetch plus a large Compose section on a device that must stay light.
+            defaultValue = {
+                !appContext.isAndroidTv() && homescreenSections[HomeScreenSection.POCKET] == true
+            },
         )
 
     /** Indicates what simple toolbar shortcut key is currently selected. */
@@ -2377,7 +2381,9 @@ class Settings(
     var showContileFeature by
         booleanPreference(
             key = appContext.getPreferenceKey(R.string.pref_key_enable_contile),
-            default = true,
+            // Android TV: sponsored shortcut tiles are a phone monetisation surface and
+            // add a network fetch to the home screen.
+            default = !appContext.isAndroidTv(),
         )
 
     /** Blocklist used to filter items from the home screen that have previously been removed. */
