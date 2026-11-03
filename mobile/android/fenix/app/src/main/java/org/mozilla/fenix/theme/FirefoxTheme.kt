@@ -4,6 +4,7 @@
 
 package org.mozilla.fenix.theme
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -72,12 +73,16 @@ fun FirefoxTheme(
         }
 
     ProvideFirefoxTokens(tabGroupColors = tabGroupColors) {
-        AcornTheme(
-            colors = colors,
-            colorScheme = colorScheme,
-            gradients = gradients,
-            content = content,
-        )
+        // Android TV: show a focus ring for every focusable control, since a D-pad
+        // has no pointer and Material's default indication only reacts to presses.
+        CompositionLocalProvider(LocalIndication provides TvFocusIndication) {
+            AcornTheme(
+                colors = colors,
+                colorScheme = colorScheme,
+                gradients = gradients,
+                content = content,
+            )
+        }
     }
 }
 

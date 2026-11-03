@@ -109,10 +109,17 @@ android {
             // and so startup does not pay for 82MB of unminified dex.
             // NOTE: must stay non-debuggable, otherwise AGP silently disables R8 optimization
             // for debuggable builds and the APK stays ~164MB.
+            //
+            // Iteration speed: R8 + resource shrinking is the dominant fixed cost of every
+            // build (~2 min). Use -PtvFast for UI work to skip it; ship builds use the
+            // minified path.
+            def tvFast = project.hasProperty("tvFast")
             debuggable = false
-            shrinkResources = true
-            minifyEnabled = true
-            proguardFiles = [getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro']
+            shrinkResources = !tvFast
+            minifyEnabled = !tvFast
+            if (!tvFast) {
+                proguardFiles = [getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro']
+            }
             matchingFallbacks = ['release']
             applicationIdSuffix ".fenix.debug"
             resValue "bool", "IS_DEBUG", "true"

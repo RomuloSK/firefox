@@ -73,6 +73,7 @@ import org.mozilla.fenix.home.topsites.ui.Shortcuts
 import org.mozilla.fenix.home.ui.horizontalMargin
 import org.mozilla.fenix.theme.FirefoxTheme
 import org.mozilla.fenix.wallpapers.WallpaperState
+import org.mozilla.fenix.theme.tvFocusRing
 
 /** The size of a top site item. */
 const val TOP_SITES_ITEM_SIZE = 84
@@ -358,7 +359,8 @@ fun TopSiteItem(
                         indication = null,
                         onRightClick = onLongClick,
                     )
-                    .width(itemLayout.itemWidth),
+                    .width(itemLayout.itemWidth)
+                    .tvFocusRing(cornerRadius = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(modifier = Modifier.height(TOP_SITES_ITEM_TOP_SPACING))
