@@ -154,6 +154,7 @@ import org.mozilla.fenix.ext.nav
 import org.mozilla.fenix.ext.openSetDefaultBrowserOption
 import org.mozilla.fenix.ext.recordEventInNimbus
 import org.mozilla.fenix.ext.setNavigationIcon
+import org.mozilla.fenix.ext.isAndroidTv
 import org.mozilla.fenix.extension.WebExtensionPromptFeature
 import org.mozilla.fenix.home.HomeFragment
 import org.mozilla.fenix.home.HomeFragmentDirections
@@ -812,6 +813,10 @@ open class HomeActivity : LocaleAwareAppCompatActivity(), NavHostActivity, Crash
 
     @VisibleForTesting
     internal fun showSetDefaultBrowserPrompt() {
+        // Android TV: this opens the system role chooser, which takes focus, cannot be
+        // dismissed with Back and is not reachable with the pointer. Several code paths
+        // can request it, so block it at the single point that actually shows it.
+        if (isAndroidTv()) return
         openSetDefaultBrowserOption()
     }
 
