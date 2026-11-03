@@ -2801,7 +2801,9 @@ class Settings(
     var shakeToSummarizeFeatureFlagEnabled by
         booleanPreference(
             key = appContext.getPreferenceKey(R.string.pref_key_enable_shake_to_summarize),
-            default = { FxNimbus.features.shakeToSummarize.value().enabled },
+            // Android TV has no accelerometer and the on-page tip obscures content,
+            // so the shake gesture is never useful there.
+            default = { !appContext.isAndroidTv() && FxNimbus.features.shakeToSummarize.value().enabled },
         )
 
     /**

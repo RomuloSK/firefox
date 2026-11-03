@@ -266,9 +266,17 @@ class TvCursorController(
         // page content, Fenix's toolbar or a menu. Routing straight to GeckoView would
         // make the app's own chrome unreachable, which is the main reason a TV browser
         // needs a pointer at all.
-        val cx = x
-        val cy = y
+        val screenX = x
+        val screenY = y
         root.post {
+            // MotionEvent coordinates are local to the view that receives them. The
+            // pointer is tracked in screen space, so translate before dispatching or
+            // taps land on the wrong control whenever the root is inset.
+            val loc = IntArray(2)
+            root.getLocationOnScreen(loc)
+            val cx = screenX - loc[0]
+            val cy = screenY - loc[1]
+
             val downTime = SystemClock.uptimeMillis()
             val down = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, cx, cy, 0)
             root.dispatchTouchEvent(down)
